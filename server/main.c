@@ -8,6 +8,7 @@
 #include "logger.h"
 
 #define MAPA_DEFAULT "assets/maps/default.csv"
+#define MAPA_CUSTOM "assets/maps/custom.csv"
 #define TIMEOUT_MS 1000
 #define MAX_TENTATIVAS 30
 
@@ -36,9 +37,13 @@ int main(int argc, char *argv[])
         }
     }
 
+    // Usa o mapa customizado se existir
+    int usa_custom = (access(MAPA_CUSTOM, R_OK) == 0);
+    const char *mapa = usa_custom ? MAPA_CUSTOM : MAPA_DEFAULT;
+
     // Inicializa um estado inicial de jogo
     GameState jogo;
-    int ini = jogo_inicializa(MAPA_DEFAULT, &jogo);
+    int ini = jogo_inicializa(mapa, &jogo);
     if (ini != 0) {
         PacmanPacket erro = {.tamanho = 0, .sequencia = pkt.sequencia, .tipo = MSG_ERRO};
         envia_mensagem(soquete, &erro);
