@@ -4,16 +4,17 @@
 #include "../shared/socket.h"
 #include "../shared/protocol.h"
 #include "../shared/screen.h"
+#include "../shared/transfer.h"
 #include "view.h"
 #include "input.h"
 
 #define TIMEOUT_MS 1000
 #define MAX_TENTATIVAS 30
 
-static void desenha(const PacmanPacket *vis, int lado)
+static void desenha(const unsigned char *bytes, int total, int lado)
 {
     clearScreen();
-    exibe_janela((const char *)vis->dados, vis->tamanho, lado);
+    exibe_janela((const char *)bytes, total, lado);
     printf("\nUse WASD para mover. Esc para sair.\n");
 }
 
@@ -35,19 +36,19 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // Recebe a visualização inicial e confirma (manda um ACK)
-    PacmanPacket vis;
-    if (recebe_mensagem(soquete, 3000, &vis) < 0 || vis.tipo != MSG_VISUALIZACAO)
+    // Recebe a visualização inicial
+    unsigned char janela[MAX_JANELA];
+    unsigned char tipo_final;
+    int total = transfer_recebe_visualizacao(soquete, janela, &tipo_final, 3000, MAX_TENTATIVAS);
+    if (total < 0 || tipo_final != MSG_VISUALIZACAO)
     {
         printf("Erro ao receber a visualização do jogo.\n");
         close(soquete);
         return 1;
     }
-    PacmanPacket ack_vis = {.tamanho = 0, .sequencia = vis.sequencia, .tipo = MSG_ACK};
-    envia_mensagem(soquete, &ack_vis);
 
     int movimentos = 0;
-    desenha(&vis, janela_lado(movimentos));
+    desenha(janela, total, janela_lado(movimentos));
 
     input_inicia();
     unsigned char seq = 0;
@@ -78,45 +79,36 @@ int main(int argc, char *argv[])
         movimentos++;
 
         // Espera a resposta do servidor: nova visualização ou fim de jogo
-        PacmanPacket resp;
-        int recebeu = 0;
-        for (int t = 0; t < MAX_TENTATIVAS && !recebeu; t++)
+        int total_resp = -1;
+        for (int t = 0; t < MAX_TENTATIVAS && total_resp < 0; t++)
         {
-            if (recebe_mensagem(soquete, TIMEOUT_MS, &resp) > 0 &&
-                (resp.tipo == MSG_VISUALIZACAO || resp.tipo == MSG_FIM_TRANS))
-            {
-                recebeu = 1;
-            }
-            else
+            total_resp = transfer_recebe_visualizacao(soquete, janela, &tipo_final, TIMEOUT_MS, MAX_TENTATIVAS);
+            if (total_resp < 0)
             {
                 // Se nada chegou, cutuca o servidor reenviando o movimento
                 // (ele deduplica pela sequência e reenvia a última visualização)
                 envia_com_ack(soquete, &mov, TIMEOUT_MS, 3);
             }
         }
-        if (!recebeu)
+        if (total_resp < 0)
         {
             printf("\nSem resposta do servidor. Encerrando.\n");
             break;
         }
 
-        // Confirma o recebimento antes de qualquer coisa
-        PacmanPacket ack = {.tamanho = 0, .sequencia = resp.sequencia, .tipo = MSG_ACK};
-        envia_mensagem(soquete, &ack);
-
-        if (resp.tipo == MSG_FIM_TRANS) // fim de jogo
+        if (tipo_final == MSG_FIM_TRANS) // fim de jogo
         {
             clearScreen();
             char msg[64];
-            int n = resp.tamanho < sizeof(msg) - 1 ? resp.tamanho : sizeof(msg) - 1;
-            memcpy(msg, resp.dados, n);
+            int n = total_resp < (int)sizeof(msg) - 1 ? total_resp : (int)sizeof(msg) - 1;
+            memcpy(msg, janela, n);
             msg[n] = '\0';
             printf("%s\n", msg);
             jogando = 0;
         }
         else
         { // MSG_VISUALIZACAO
-            desenha(&resp, janela_lado(movimentos));
+            desenha(janela, total_resp, janela_lado(movimentos));
         }
     }
 

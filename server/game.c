@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <string.h>
 #include "game.h"
 #include "../shared/screen.h"
@@ -108,7 +107,7 @@ static void compoe_mapa(const GameState *jogo, char saida[MAP_ROWS][MAP_COLS])
     saida[jogo->pr][jogo->pc] = 'P';
 }
 
-void jogo_monta_janela(const GameState *jogo, unsigned char *janela, unsigned char *tamanho)
+void jogo_monta_janela(const GameState *jogo, unsigned char *janela, int *tamanho)
 {
     char mapa[MAP_ROWS][MAP_COLS];
     compoe_mapa(jogo, mapa);
@@ -127,15 +126,5 @@ void jogo_monta_janela(const GameState *jogo, unsigned char *janela, unsigned ch
                 janela[k++] = (unsigned char)mapa[r][c];
         }
     }
-    *tamanho = (unsigned char)k;
-}
-
-void jogo_renderiza_servidor(const GameState *jogo)
-{
-    char mapa[MAP_ROWS][MAP_COLS];
-    compoe_mapa(jogo, mapa);
-
-    clearScreen();
-    imprime_mapa(mapa);
-    printf("Pastilhas: %d/%d   Movimentos: %d\n", jogo->total_coletadas, NUM_PASTILHAS, jogo->movimentos);
+    *tamanho = k;
 }

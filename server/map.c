@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include "map.h"
-#include "../shared/screen.h"
 
 int carrega_mapa(const char *caminho, char mapa[MAP_ROWS][MAP_COLS])
 {
@@ -52,13 +51,4 @@ int posiciona_caractere(char mapa[MAP_ROWS][MAP_COLS], char caractere, int *out_
                 contador++;
             }
     return -1;
-}
-
-void imprime_mapa(const char mapa[MAP_ROWS][MAP_COLS])
-{
-    for (int r = 0; r < MAP_ROWS; r++) {
-        for (int c = 0; c < MAP_COLS; c++)
-            imprime_caractere_colorido(mapa[r][c]);
-        putchar('\n');
-    }
 }

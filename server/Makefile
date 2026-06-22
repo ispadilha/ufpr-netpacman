@@ -34,12 +34,15 @@ build/crc.o: ../shared/crc.c
 build/screen.o: ../shared/screen.c
 	gcc -Wall -Wextra -c ../shared/screen.c -o build/screen.o
 
+build/transfer.o: ../shared/transfer.c
+	gcc -Wall -Wextra -c ../shared/transfer.c -o build/transfer.o
+
 # Linka os .o no executável
 
 build/pacman_server: build/main.o build/map.o build/logger.o \
                      build/game.o build/movements.o build/socket.o \
-                     build/protocol.o build/crc.o build/screen.o
-	gcc build/main.o build/map.o build/logger.o build/game.o build/movements.o build/socket.o build/protocol.o build/crc.o build/screen.o -o build/pacman_server
+                     build/protocol.o build/crc.o build/screen.o build/transfer.o
+	gcc build/main.o build/map.o build/logger.o build/game.o build/movements.o build/socket.o build/protocol.o build/crc.o build/screen.o build/transfer.o -o build/pacman_server
 
 # Limpeza
 

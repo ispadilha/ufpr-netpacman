@@ -29,10 +29,6 @@ int jogo_inicializa(const char *caminho_mapa, GameState *jogo);
 int jogo_venceu(const GameState *jogo); // coletou todas as pastilhas
 int jogo_perdeu(const GameState *jogo); // fantasma em casa vizinha do pacman
 
-void jogo_monta_janela(const GameState *jogo, unsigned char *janela, unsigned char *tamanho);
-
-// Desenha o tabuleiro completo no terminal do servidor
-// Usado para debug e não exigido na entrega, talvez a gente tira depois, ou não
-void jogo_renderiza_servidor(const GameState *jogo);
+void jogo_monta_janela(const GameState *jogo, unsigned char *janela, int *tamanho);
 
 #endif
