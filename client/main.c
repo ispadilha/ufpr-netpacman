@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "../shared/socket.h"
@@ -10,6 +11,7 @@
 
 #define TIMEOUT_MS 1000
 #define MAX_TENTATIVAS 30
+#define IMAGEM_GAME_OVER "game_over.jpg"
 
 static void desenha(const unsigned char *bytes, int total, int lado)
 {
@@ -104,6 +106,16 @@ int main(int argc, char *argv[])
             memcpy(msg, janela, n);
             msg[n] = '\0';
             printf("%s\n", msg);
+            jogando = 0;
+        }
+        else if (tipo_final == MSG_JPG)
+        /* MSG_JPG sinalizando derrota, pq a única imagem usada por enquanto é a de game over,
+        gambiarra, lembrar de mudar depois */
+        {
+            clearScreen();
+            printf("Fim de jogo!\n");
+            transfer_recebe_arquivo(soquete, IMAGEM_GAME_OVER, TIMEOUT_MS, MAX_TENTATIVAS);
+            system("xdg-open " IMAGEM_GAME_OVER); // abre no programa padrão do sistema
             jogando = 0;
         }
         else

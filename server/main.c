@@ -11,6 +11,7 @@
 
 #define MAPA_DEFAULT "assets/maps/default.csv"
 #define MAPA_CUSTOM "assets/maps/custom.csv"
+#define IMAGEM_GAME_OVER "assets/game_over.jpg"
 #define TIMEOUT_MS 1000
 #define MAX_TENTATIVAS 30
 
@@ -130,15 +131,9 @@ int main(int argc, char *argv[])
 
         // Se algum fantasma chegou a uma das 8 casas adjacentes ao pacman: derrota
         if (jogo_perdeu(&jogo)) {
-            const char *texto = "Fim de jogo!";
-            PacmanPacket fim = {
-                .tamanho = (unsigned char)strlen(texto),
-                .sequencia = seq_vis,
-                .tipo = MSG_FIM_TRANS,
-                .dados = (unsigned char *)texto,
-            };
-            envia_com_ack(soquete, &fim, TIMEOUT_MS, MAX_TENTATIVAS);
-            log_enviado(&fim);
+            PacmanPacket aviso_game_over = {.tamanho = 0, .sequencia = seq_vis, .tipo = MSG_JPG};
+            envia_com_ack(soquete, &aviso_game_over, TIMEOUT_MS, MAX_TENTATIVAS);
+            transfer_envia_arquivo(soquete, IMAGEM_GAME_OVER, &seq_vis, TIMEOUT_MS, MAX_TENTATIVAS);
             log_info("Fim de jogo: derrota (um fantasma alcancou o pacman).");
             break;
         }
