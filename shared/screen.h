@@ -1,6 +1,10 @@
 #ifndef SCREEN_H
 #define SCREEN_H
 
+#define MAX_RAIO 10
+#define MAX_LADO (2 * MAX_RAIO + 1)
+#define MAX_JANELA (MAX_LADO * MAX_LADO)
+
 // Limpa a tela do terminal (ANSI Escape Sequences)
 void clearScreen(void);
 

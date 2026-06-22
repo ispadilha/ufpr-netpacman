@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include "../shared/socket.h"
 #include "../shared/protocol.h"
+#include "../shared/transfer.h"
+#include "../shared/screen.h"
 #include "game.h"
 #include "movements.h"
 #include "logger.h"
@@ -60,17 +62,17 @@ int main(int argc, char *argv[])
     log_enviado(&ack_init);
 
     // Envia a primeira visualização
-    unsigned char janela[64];
-    PacmanPacket vis = {.sequencia = 0, .tipo = MSG_VISUALIZACAO, .dados = janela};
-    jogo_monta_janela(&jogo, janela, &vis.tamanho);
-    envia_com_ack(soquete, &vis, TIMEOUT_MS, MAX_TENTATIVAS);
-    log_enviado(&vis);
+    unsigned char janela[MAX_JANELA];
+    int total_vis;
+    unsigned char seq_vis = 0; // .sequencia pra próxima visualização enviada
+    jogo_monta_janela(&jogo, janela, &total_vis);
+    transfer_envia_visualizacao(soquete, janela, total_vis, &seq_vis, TIMEOUT_MS, MAX_TENTATIVAS);
+    log_info("Visualizacao inicial enviada.");
 
     jogo_renderiza_servidor(&jogo);
 
     // Inicializa variáveis para sequenciamento de pacotes
     int ultima_seq_cmd = -1; // .sequencia do último comando recebido
-    unsigned char seq_vis = 1; // .sequencia pra próxima visualização enviada
 
     // Loop do jogo
     while (1) {
@@ -102,7 +104,7 @@ int main(int argc, char *argv[])
         // reenvia a última janela, sem reprocessar o movimento
         if ((int)cmd.sequencia == ultima_seq_cmd)
         {
-            envia_com_ack(soquete, &vis, TIMEOUT_MS, MAX_TENTATIVAS);
+            transfer_envia_visualizacao(soquete, janela, total_vis, &seq_vis, TIMEOUT_MS, MAX_TENTATIVAS);
             continue;
         }
         ultima_seq_cmd = cmd.sequencia;
@@ -146,11 +148,9 @@ int main(int argc, char *argv[])
         }
 
         // Envia a nova visualização
-        vis.sequencia = seq_vis;
-        seq_vis = (seq_vis + 1) % 64; // sequencia tem 6 bits: volta a 0 após 63
-        jogo_monta_janela(&jogo, janela, &vis.tamanho);
-        envia_com_ack(soquete, &vis, TIMEOUT_MS, MAX_TENTATIVAS);
-        log_enviado(&vis);
+        jogo_monta_janela(&jogo, janela, &total_vis);
+        transfer_envia_visualizacao(soquete, janela, total_vis, &seq_vis, TIMEOUT_MS, MAX_TENTATIVAS);
+        log_info("Visualizacao enviada.");
     }
 
     close(soquete);

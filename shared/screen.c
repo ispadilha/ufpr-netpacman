@@ -38,9 +38,10 @@ void imprime_caractere_colorido(char c)
 
 int janela_raio(int movimentos)
 {
-    // Falta fazer crescer a cada 5 movimentos, ver o enunciado
-    (void)movimentos; // só pra não dar warning
-    return 1;
+    int raio = 1 + movimentos / 5;
+    if (raio > MAX_RAIO)
+        raio = MAX_RAIO;
+    return raio;
 }
 
 int janela_lado(int movimentos)
