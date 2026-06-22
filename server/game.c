@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <string.h>
 #include "game.h"
 #include "../shared/screen.h"
@@ -128,14 +127,4 @@ void jogo_monta_janela(const GameState *jogo, unsigned char *janela, int *tamanh
         }
     }
     *tamanho = k;
-}
-
-void jogo_renderiza_servidor(const GameState *jogo)
-{
-    char mapa[MAP_ROWS][MAP_COLS];
-    compoe_mapa(jogo, mapa);
-
-    clearScreen();
-    imprime_mapa(mapa);
-    printf("Pastilhas: %d/%d   Movimentos: %d\n", jogo->total_coletadas, NUM_PASTILHAS, jogo->movimentos);
 }

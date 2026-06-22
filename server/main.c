@@ -69,8 +69,6 @@ int main(int argc, char *argv[])
     transfer_envia_visualizacao(soquete, janela, total_vis, &seq_vis, TIMEOUT_MS, MAX_TENTATIVAS);
     log_info("Visualizacao inicial enviada.");
 
-    jogo_renderiza_servidor(&jogo);
-
     // Inicializa variáveis para sequenciamento de pacotes
     int ultima_seq_cmd = -1; // .sequencia do último comando recebido
 
@@ -115,7 +113,6 @@ int main(int argc, char *argv[])
 
         // Se coletou todas as pastilhas: vitória (nem precisa mover os fantasmas)
         if (jogo_venceu(&jogo)) {
-            jogo_renderiza_servidor(&jogo);
             const char *texto = "Voce venceu!";
             PacmanPacket fim = {
                 .tamanho = (unsigned char)strlen(texto),
@@ -130,7 +127,6 @@ int main(int argc, char *argv[])
         }
 
         move_fantasmas(&jogo);
-        jogo_renderiza_servidor(&jogo);
 
         // Se algum fantasma chegou a uma das 8 casas adjacentes ao pacman: derrota
         if (jogo_perdeu(&jogo)) {
