@@ -31,8 +31,8 @@ int transfer_envia_visualizacao(int soquete, const unsigned char *dados, int tot
     return 0;
 }
 
-int transfer_recebe_visualizacao(int soquete, unsigned char *dados, unsigned char *tipo_final,
-                                 int timeoutMillis, int max_tentativas)
+int transfer_recebe_dados(int soquete, unsigned char *dados, unsigned char *tipo_final,
+                          int timeoutMillis, int max_tentativas)
 {
     int total = 0;
     int recebeu_algum = 0;

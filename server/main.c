@@ -88,12 +88,11 @@ int main(int argc, char *argv[])
     // Envia a primeira visualização
     unsigned char janela[MAX_JANELA];
     int total_vis;
-    unsigned char seq_vis = 0; // .sequencia pra próxima visualização enviada
+    unsigned char seq_envio = 0; // .sequencia do próximo pacote enviado
     jogo_monta_janela(&jogo, janela, &total_vis);
-    transfer_envia_visualizacao(soquete, janela, total_vis, &seq_vis, TIMEOUT_MS, MAX_TENTATIVAS);
+    transfer_envia_visualizacao(soquete, janela, total_vis, &seq_envio, TIMEOUT_MS, MAX_TENTATIVAS);
     log_info("Visualizacao inicial enviada.");
 
-    // Inicializa variáveis para sequenciamento de pacotes
     int ultima_seq_cmd = -1; // .sequencia do último comando recebido
 
     // Loop do jogo
@@ -126,7 +125,7 @@ int main(int argc, char *argv[])
         // reenvia a última janela, sem reprocessar o movimento
         if ((int)cmd.sequencia == ultima_seq_cmd)
         {
-            transfer_envia_visualizacao(soquete, janela, total_vis, &seq_vis, TIMEOUT_MS, MAX_TENTATIVAS);
+            transfer_envia_visualizacao(soquete, janela, total_vis, &seq_envio, TIMEOUT_MS, MAX_TENTATIVAS);
             continue;
         }
         ultima_seq_cmd = cmd.sequencia;
@@ -144,12 +143,12 @@ int main(int argc, char *argv[])
 
             PacmanPacket aviso_premio = {
                 .tamanho = (unsigned char)strlen(nome),
-                .sequencia = seq_vis,
+                .sequencia = seq_envio,
                 .tipo = tipo_premio,
                 .dados = (unsigned char *)nome,
             };
             envia_com_ack(soquete, &aviso_premio, TIMEOUT_MS, MAX_TENTATIVAS);
-            transfer_envia_arquivo(soquete, caminho, &seq_vis, TIMEOUT_MS, MAX_TENTATIVAS);
+            transfer_envia_arquivo(soquete, caminho, &seq_envio, TIMEOUT_MS, MAX_TENTATIVAS);
             log_info("Premio enviado.");
         }
 
@@ -158,7 +157,7 @@ int main(int argc, char *argv[])
             const char *texto = "Voce venceu!";
             PacmanPacket fim = {
                 .tamanho = (unsigned char)strlen(texto),
-                .sequencia = seq_vis,
+                .sequencia = seq_envio,
                 .tipo = MSG_FIM_TRANS,
                 .dados = (unsigned char *)texto,
             };
@@ -175,17 +174,17 @@ int main(int argc, char *argv[])
             const char *nome = "game_over.jpg";
             PacmanPacket aviso_game_over = {
                 .tamanho = (unsigned char)strlen(nome),
-                .sequencia = seq_vis,
+                .sequencia = seq_envio,
                 .tipo = MSG_JPG,
                 .dados = (unsigned char *)nome,
             };
             envia_com_ack(soquete, &aviso_game_over, TIMEOUT_MS, MAX_TENTATIVAS);
-            transfer_envia_arquivo(soquete, IMAGEM_GAME_OVER, &seq_vis, TIMEOUT_MS, MAX_TENTATIVAS);
+            transfer_envia_arquivo(soquete, IMAGEM_GAME_OVER, &seq_envio, TIMEOUT_MS, MAX_TENTATIVAS);
 
             const char *texto = "Fim de jogo!";
             PacmanPacket fim = {
                 .tamanho = (unsigned char)strlen(texto),
-                .sequencia = seq_vis,
+                .sequencia = seq_envio,
                 .tipo = MSG_FIM_TRANS,
                 .dados = (unsigned char *)texto,
             };
@@ -196,7 +195,7 @@ int main(int argc, char *argv[])
 
         // Envia a nova visualização
         jogo_monta_janela(&jogo, janela, &total_vis);
-        transfer_envia_visualizacao(soquete, janela, total_vis, &seq_vis, TIMEOUT_MS, MAX_TENTATIVAS);
+        transfer_envia_visualizacao(soquete, janela, total_vis, &seq_envio, TIMEOUT_MS, MAX_TENTATIVAS);
         log_info("Visualizacao enviada.");
     }
 
