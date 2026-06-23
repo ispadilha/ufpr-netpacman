@@ -72,13 +72,15 @@ static int livre_para_fantasma(const GameState *jogo, int indice_fantasma, Direc
     return 1;
 }
 
-void move_pacman(GameState *jogo, Direcao dir)
+int move_pacman(GameState *jogo, Direcao dir)
 {
     int nr = jogo->pr + DR[dir];
     int nc = jogo->pc + DC[dir];
 
     if (eh_parede(jogo, nr, nc))
-        return; // não atravessa parede (o turno passa mesmo assim)
+        return 0; // não atravessa parede (o turno passa mesmo assim)
+
+    int coletada = 0;
 
     // Coleta de pastilha
     char alvo = jogo->base[nr][nc];
@@ -87,12 +89,14 @@ void move_pacman(GameState *jogo, Direcao dir)
         if (!jogo->coletadas[d]) {
             jogo->coletadas[d] = 1;
             jogo->total_coletadas++;
+            coletada = d;
         }
         jogo->base[nr][nc] = '0'; // pastilha consumida
     }
 
     jogo->pr = nr;
     jogo->pc = nc;
+    return coletada;
 }
 
 static void move_um_fantasma(GameState *jogo, int indice_fantasma)

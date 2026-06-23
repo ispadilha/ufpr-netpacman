@@ -47,8 +47,8 @@ int transfer_recebe_visualizacao(int soquete, unsigned char *dados, unsigned cha
             continue;
         }
 
-        if (pkt.tipo != MSG_DADOS && pkt.tipo != MSG_VISUALIZACAO &&
-            pkt.tipo != MSG_FIM_TRANS && pkt.tipo != MSG_JPG)
+        if (pkt.tipo != MSG_DADOS && pkt.tipo != MSG_VISUALIZACAO && pkt.tipo != MSG_FIM_TRANS &&
+            pkt.tipo != MSG_JPG && pkt.tipo != MSG_TXT && pkt.tipo != MSG_MP4)
             continue;
 
         // Primeiro pacote
@@ -69,7 +69,7 @@ int transfer_recebe_visualizacao(int soquete, unsigned char *dados, unsigned cha
         envia_mensagem(soquete, &ack);
 
         // MSG_DADOS são "pedaços do meio" das transferências, os outros encerram
-        if (pkt.tipo == MSG_VISUALIZACAO || pkt.tipo == MSG_FIM_TRANS || pkt.tipo == MSG_JPG)
+        if (pkt.tipo != MSG_DADOS)
         {
             *tipo_final = pkt.tipo;
             return total;

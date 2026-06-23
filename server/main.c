@@ -20,6 +20,29 @@ static int eh_movimento(unsigned char tipo)
     return tipo == MSG_DIREITA || tipo == MSG_ESQUERDA || tipo == MSG_CIMA || tipo == MSG_BAIXO;
 }
 
+static void monta_caminho_premio(int d, char *caminho, char *nome, unsigned char *tipo)
+{
+    const char *ext;
+    if (d <= 2)
+    {
+        *tipo = MSG_TXT;
+        ext = "txt";
+    }
+    else if (d <= 4)
+    {
+        *tipo = MSG_JPG;
+        ext = "jpg";
+    }
+    else
+    {
+        *tipo = MSG_MP4;
+        ext = "mp4";
+    }
+
+    sprintf(nome, "%d.%s", d, ext);
+    sprintf(caminho, "assets/%s", nome);
+}
+
 int main(int argc, char *argv[])
 {
     if (argc < 2) {
@@ -110,7 +133,25 @@ int main(int argc, char *argv[])
 
         // Processa o movimento do pacman
         jogo.movimentos++;
-        move_pacman(&jogo, tipo_para_direcao(cmd.tipo));
+        int coletada = move_pacman(&jogo, tipo_para_direcao(cmd.tipo));
+
+        // Se coletou uma pastilha: avisa e envia o arquivo prêmio
+        if (coletada)
+        {
+            char caminho[32], nome[16];
+            unsigned char tipo_premio;
+            monta_caminho_premio(coletada, caminho, nome, &tipo_premio);
+
+            PacmanPacket aviso_premio = {
+                .tamanho = (unsigned char)strlen(nome),
+                .sequencia = seq_vis,
+                .tipo = tipo_premio,
+                .dados = (unsigned char *)nome,
+            };
+            envia_com_ack(soquete, &aviso_premio, TIMEOUT_MS, MAX_TENTATIVAS);
+            transfer_envia_arquivo(soquete, caminho, &seq_vis, TIMEOUT_MS, MAX_TENTATIVAS);
+            log_info("Premio enviado.");
+        }
 
         // Se coletou todas as pastilhas: vitória (nem precisa mover os fantasmas)
         if (jogo_venceu(&jogo)) {
@@ -131,9 +172,24 @@ int main(int argc, char *argv[])
 
         // Se algum fantasma chegou a uma das 8 casas adjacentes ao pacman: derrota
         if (jogo_perdeu(&jogo)) {
-            PacmanPacket aviso_game_over = {.tamanho = 0, .sequencia = seq_vis, .tipo = MSG_JPG};
+            const char *nome = "game_over.jpg";
+            PacmanPacket aviso_game_over = {
+                .tamanho = (unsigned char)strlen(nome),
+                .sequencia = seq_vis,
+                .tipo = MSG_JPG,
+                .dados = (unsigned char *)nome,
+            };
             envia_com_ack(soquete, &aviso_game_over, TIMEOUT_MS, MAX_TENTATIVAS);
             transfer_envia_arquivo(soquete, IMAGEM_GAME_OVER, &seq_vis, TIMEOUT_MS, MAX_TENTATIVAS);
+
+            const char *texto = "Fim de jogo!";
+            PacmanPacket fim = {
+                .tamanho = (unsigned char)strlen(texto),
+                .sequencia = seq_vis,
+                .tipo = MSG_FIM_TRANS,
+                .dados = (unsigned char *)texto,
+            };
+            envia_com_ack(soquete, &fim, TIMEOUT_MS, MAX_TENTATIVAS);
             log_info("Fim de jogo: derrota (um fantasma alcancou o pacman).");
             break;
         }
