@@ -34,6 +34,7 @@ colocando um padding de 14 bytes (que seria o tamanho de um cabeçalho Ethernet)
 */
 
 #define BUFFER_MAX (FRAME_MAX + PADDING_LEN)
+#define TIMEOUT_MAX 10000
 
 // usando long long pra (tentar) sobreviver ao ano 2038
 long long timestamp()
@@ -153,10 +154,18 @@ int recebe_mensagem(int soquete, int timeoutMillis, PacmanPacket *pacote_recebid
 
 int envia_com_ack(int soquete, const PacmanPacket *pacote, int timeoutMillis, int max_tentativas) {
     PacmanPacket resposta;
+    int espera = timeoutMillis;
+
     for (int tentativa = 0; tentativa < max_tentativas; tentativa++) {
         envia_mensagem(soquete, pacote);
-        if (recebe_mensagem(soquete, timeoutMillis, &resposta) > 0 && resposta.tipo == MSG_ACK)
+        if (recebe_mensagem(soquete, espera, &resposta) > 0 && resposta.tipo == MSG_ACK)
             return 0;
+
+        // Recuo exponencial
+        espera = espera * 2;
+        if (espera > TIMEOUT_MAX)
+            espera = TIMEOUT_MAX;
+
         // timeout, NACK ou pacote inesperado: retransmite
     }
     return -1;
