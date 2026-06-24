@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "../shared/socket.h"
@@ -37,9 +38,9 @@ int main(int argc, char *argv[])
     }
 
     // Recebe a visualização inicial
-    unsigned char janela[MAX_JANELA];
+    unsigned char dados[MAX_JANELA];
     unsigned char tipo_final;
-    int total = transfer_recebe_visualizacao(soquete, janela, &tipo_final, 3000, MAX_TENTATIVAS);
+    int total = transfer_recebe_dados(soquete, dados, &tipo_final, 3000, MAX_TENTATIVAS);
     if (total < 0 || tipo_final != MSG_VISUALIZACAO)
     {
         printf("Erro ao receber a visualização do jogo.\n");
@@ -48,7 +49,7 @@ int main(int argc, char *argv[])
     }
 
     int movimentos = 0;
-    desenha(janela, total, janela_lado(movimentos));
+    desenha(dados, total, janela_lado(movimentos));
 
     input_inicia();
     unsigned char seq = 0;
@@ -78,11 +79,11 @@ int main(int argc, char *argv[])
         seq = (seq + 1) % 64; // sequencia tem 6 bits: volta a 0 após 63
         movimentos++;
 
-        // Espera a resposta do servidor: nova visualização ou fim de jogo
+        // Espera a resposta do servidor: nova visualização ou fim de jogo ou arquivos
         int total_resp = -1;
         for (int t = 0; t < MAX_TENTATIVAS && total_resp < 0; t++)
         {
-            total_resp = transfer_recebe_visualizacao(soquete, janela, &tipo_final, TIMEOUT_MS, MAX_TENTATIVAS);
+            total_resp = transfer_recebe_dados(soquete, dados, &tipo_final, TIMEOUT_MS, MAX_TENTATIVAS);
             if (total_resp < 0)
             {
                 // Se nada chegou, cutuca o servidor reenviando o movimento
@@ -90,6 +91,25 @@ int main(int argc, char *argv[])
                 envia_com_ack(soquete, &mov, TIMEOUT_MS, 3);
             }
         }
+
+        // Enquanto a resposta anunciar um arquivo, espera receber, salvar e abrir
+        while (total_resp >= 0 &&
+               (tipo_final == MSG_TXT || tipo_final == MSG_JPG || tipo_final == MSG_MP4))
+        {
+            char nome[64];
+            int n = total_resp < (int)sizeof(nome) - 1 ? total_resp : (int)sizeof(nome) - 1;
+            memcpy(nome, dados, n);
+            nome[n] = '\0';
+
+            transfer_recebe_arquivo(soquete, nome, TIMEOUT_MS, MAX_TENTATIVAS);
+
+            char comando[128];
+            sprintf(comando, "xdg-open %s", nome); // abre no programa padrão do sistema
+            system(comando);
+
+            total_resp = transfer_recebe_dados(soquete, dados, &tipo_final, TIMEOUT_MS, MAX_TENTATIVAS);
+        }
+
         if (total_resp < 0)
         {
             printf("\nSem resposta do servidor. Encerrando.\n");
@@ -101,14 +121,14 @@ int main(int argc, char *argv[])
             clearScreen();
             char msg[64];
             int n = total_resp < (int)sizeof(msg) - 1 ? total_resp : (int)sizeof(msg) - 1;
-            memcpy(msg, janela, n);
+            memcpy(msg, dados, n);
             msg[n] = '\0';
             printf("%s\n", msg);
             jogando = 0;
         }
         else
         { // MSG_VISUALIZACAO
-            desenha(janela, total_resp, janela_lado(movimentos));
+            desenha(dados, total_resp, janela_lado(movimentos));
         }
     }
 

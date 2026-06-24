@@ -12,6 +12,10 @@
 #include "socket.h"
 #include "protocol.h"
 
+#ifdef LOG_PACOTES
+#include "../server/logger.h" // só o servidor compila com -DLOG_PACOTES
+#endif
+
 #define FRAME_MAX 35
 /*
 Marcador (8 bits)
@@ -30,6 +34,7 @@ colocando um padding de 14 bytes (que seria o tamanho de um cabeçalho Ethernet)
 */
 
 #define BUFFER_MAX (FRAME_MAX + PADDING_LEN)
+#define TIMEOUT_MAX 10000
 
 // usando long long pra (tentar) sobreviver ao ano 2038
 long long timestamp()
@@ -96,6 +101,9 @@ int envia_mensagem(int soquete, const PacmanPacket *pacote) {
         return -1;
     }
 
+#ifdef LOG_PACOTES
+    log_enviado(pacote);
+#endif
     return tamanho_serializado;
 }
 
@@ -123,10 +131,16 @@ int recebe_mensagem(int soquete, int timeoutMillis, PacmanPacket *pacote_recebid
                 int resultado_dsp = deserialize_packet(buffer + PADDING_LEN, bytes_lidos - PADDING_LEN, pacote_recebido);
                 if (resultado_dsp == PKT_OK)
                 {
+#ifdef LOG_PACOTES
+                    log_recebido(pacote_recebido);
+#endif
                     return bytes_lidos;
                 }
                 if (resultado_dsp == PKT_CRC_ERRO)
                 {
+#ifdef LOG_PACOTES
+                    log_erro("Pacote com CRC errado, enviando NACK");
+#endif
                     PacmanPacket nack = {.tamanho = 0, .sequencia = 0, .tipo = MSG_NACK};
                     envia_mensagem(soquete, &nack);
                 }
@@ -140,10 +154,18 @@ int recebe_mensagem(int soquete, int timeoutMillis, PacmanPacket *pacote_recebid
 
 int envia_com_ack(int soquete, const PacmanPacket *pacote, int timeoutMillis, int max_tentativas) {
     PacmanPacket resposta;
+    int espera = timeoutMillis;
+
     for (int tentativa = 0; tentativa < max_tentativas; tentativa++) {
         envia_mensagem(soquete, pacote);
-        if (recebe_mensagem(soquete, timeoutMillis, &resposta) > 0 && resposta.tipo == MSG_ACK)
+        if (recebe_mensagem(soquete, espera, &resposta) > 0 && resposta.tipo == MSG_ACK)
             return 0;
+
+        // Recuo exponencial
+        espera = espera * 2;
+        if (espera > TIMEOUT_MAX)
+            espera = TIMEOUT_MAX;
+
         // timeout, NACK ou pacote inesperado: retransmite
     }
     return -1;

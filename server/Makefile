@@ -22,8 +22,9 @@ build/movements.o: movements.c
 
 # Arquivos compartilhados (../shared)
 
+# -DLOG_PACOTES liga os logs (só o servidor compila assim)
 build/socket.o: ../shared/socket.c
-	gcc -Wall -Wextra -c ../shared/socket.c -o build/socket.o
+	gcc -Wall -Wextra -DLOG_PACOTES -c ../shared/socket.c -o build/socket.o
 
 build/protocol.o: ../shared/protocol.c
 	gcc -Wall -Wextra -c ../shared/protocol.c -o build/protocol.o

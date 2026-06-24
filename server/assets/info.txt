@@ -1,0 +1,33 @@
+Informações sobre os arquivos usados no trabalho
+
+------------------------------------------------------------------------------------------
+
+	Textos
+		1.txt
+			Fonte: pedimos um "Lorem Ipsum" de 5 parágrafos em lipsum.com
+			
+		2.txt
+			Fonte: https://en.wikipedia.org/wiki/Computer_network
+			
+------------------------------------------------------------------------------------------
+
+	Imagens (fonte: buscas por "pacman" em imagens grátis em magnific.com)
+	
+		game_over.jpg
+			Nome original: 4047709_2136078.jpg
+			
+		3.jpg
+			Nome original: 2632371_8460.jpg
+		
+		4.jpg
+			Nome original: 2632369_8458.jpg
+			
+------------------------------------------------------------------------------------------
+			
+	Vídeos (fonte: buscas por "copyright-free sample videos" em torrents)
+	
+		5.mp4
+			Nome original: Abstract Motion Graphics Background Effects - Free Stock Footage 4k - No Copyright-LAJWtMAbKNY.mp4
+			
+		6.mp4
+			Nome original: Sunburst Radiation Lights - Free HD Stock Footage - No Copyright - Sun Space Light Effects-pGe9viaLzuI.mp4
