@@ -57,7 +57,6 @@ int main(int argc, char *argv[])
     PacmanPacket pkt;
     while (1) {
         if (recebe_mensagem(soquete, TIMEOUT_MS, &pkt) > 0) {
-            log_recebido(&pkt);
             if (pkt.tipo == MSG_INIT) break;
             log_info("Pacote ignorado (não é INIT).");
         }
@@ -73,7 +72,6 @@ int main(int argc, char *argv[])
     if (ini != 0) {
         PacmanPacket erro = {.tamanho = 0, .sequencia = pkt.sequencia, .tipo = MSG_ERRO};
         envia_mensagem(soquete, &erro);
-        log_enviado(&erro);
         log_erro(ini == -1 ? "Erro ao carregar o mapa. Encerrando."
                            : "Não foi gerado um tabuleiro válido. Encerrando.");
         close(soquete);
@@ -83,7 +81,6 @@ int main(int argc, char *argv[])
     // Confirma o INIT (envia um ACK)
     PacmanPacket ack_init = {.tamanho = 0, .sequencia = pkt.sequencia, .tipo = MSG_ACK};
     envia_mensagem(soquete, &ack_init);
-    log_enviado(&ack_init);
 
     // Envia a primeira visualização
     unsigned char janela[MAX_JANELA];
@@ -108,14 +105,12 @@ int main(int argc, char *argv[])
         {
             PacmanPacket ack = {.tamanho = 0, .sequencia = cmd.sequencia, .tipo = MSG_ACK};
             envia_mensagem(soquete, &ack);
-            log_recebido(&cmd);
             log_info("Client encerrou o jogo. Finalizando.");
             break;
         }
 
         if (!eh_movimento(cmd.tipo))
             continue;
-        log_recebido(&cmd);
 
         // Antes de qualquer coisa: confirma o recebimento
         PacmanPacket ack = {.tamanho = 0, .sequencia = cmd.sequencia, .tipo = MSG_ACK};
@@ -162,7 +157,6 @@ int main(int argc, char *argv[])
                 .dados = (unsigned char *)texto,
             };
             envia_com_ack(soquete, &fim, TIMEOUT_MS, MAX_TENTATIVAS);
-            log_enviado(&fim);
             log_info("Fim de jogo: vitoria (todas as pastilhas coletadas).");
             break;
         }

@@ -12,6 +12,10 @@
 #include "socket.h"
 #include "protocol.h"
 
+#ifdef LOG_PACOTES
+#include "../server/logger.h" // só o servidor compila com -DLOG_PACOTES
+#endif
+
 #define FRAME_MAX 35
 /*
 Marcador (8 bits)
@@ -96,6 +100,9 @@ int envia_mensagem(int soquete, const PacmanPacket *pacote) {
         return -1;
     }
 
+#ifdef LOG_PACOTES
+    log_enviado(pacote);
+#endif
     return tamanho_serializado;
 }
 
@@ -123,10 +130,16 @@ int recebe_mensagem(int soquete, int timeoutMillis, PacmanPacket *pacote_recebid
                 int resultado_dsp = deserialize_packet(buffer + PADDING_LEN, bytes_lidos - PADDING_LEN, pacote_recebido);
                 if (resultado_dsp == PKT_OK)
                 {
+#ifdef LOG_PACOTES
+                    log_recebido(pacote_recebido);
+#endif
                     return bytes_lidos;
                 }
                 if (resultado_dsp == PKT_CRC_ERRO)
                 {
+#ifdef LOG_PACOTES
+                    log_erro("Pacote com CRC errado, enviando NACK");
+#endif
                     PacmanPacket nack = {.tamanho = 0, .sequencia = 0, .tipo = MSG_NACK};
                     envia_mensagem(soquete, &nack);
                 }
